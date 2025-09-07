@@ -9,7 +9,6 @@ void RevertString(char *str)
     
     while (i < j)
     {
-        // Меняем местами символы
         char temp = str[i];
         str[i] = str[j];
         str[j] = temp;
