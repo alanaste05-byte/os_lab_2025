@@ -15,16 +15,19 @@ struct ThreadArgs {
     int end;
 };
 
+// Функция, выполняемая каждым потоком
 void* calculate_partial_factorial(void* args) {
     struct ThreadArgs* thread_args = (struct ThreadArgs*)args;
     unsigned long long partial_result = 1;
     
+    // Вычисление частичного факториала для диапазона чисел
     for (int i = thread_args->start; i <= thread_args->end; i++) {
-        partial_result = (partial_result * i) % mod;
+        partial_result = (partial_result * i) % mod; // Умножение с взятием модуля на каждом шаге
     }
     
+    // Синхронизированное обновление глобального результата
     pthread_mutex_lock(&mutex);
-    result = (result * partial_result) % mod;
+    result = (result * partial_result) % mod; // Умножение частичного результата на общий
     pthread_mutex_unlock(&mutex);
     
     return NULL;
@@ -69,20 +72,23 @@ int main(int argc, char** argv) {
     
     printf("Computing %d! mod %d using %d threads\n", k, mod, pnum);
     
+    // Массивы для потоков и их аргументов
     pthread_t threads[pnum];
     struct ThreadArgs thread_args[pnum];
     
     // Распределение работы между потоками
-    int numbers_per_thread = k / pnum;
-    int remainder = k % pnum;
+    int numbers_per_thread = k / pnum; //базовое колво на поток
+    int remainder = k % pnum; //остаток
     int current_start = 1;
     
+    //передаем числа в потоки
     for (int i = 0; i < pnum; i++) {
         int numbers_for_this_thread = numbers_per_thread;
         if (i < remainder) {
             numbers_for_this_thread++;
         }
         
+        //диапазон
         thread_args[i].start = current_start;
         thread_args[i].end = current_start + numbers_for_this_thread - 1;
         current_start += numbers_for_this_thread;
@@ -90,6 +96,7 @@ int main(int argc, char** argv) {
         printf("Thread %d: numbers from %d to %d\n", 
                i, thread_args[i].start, thread_args[i].end);
         
+               //создаем поток
         if (pthread_create(&threads[i], NULL, calculate_partial_factorial, 
                           (void*)&thread_args[i]) != 0) {
             printf("Error: pthread_create failed!\n");
@@ -97,6 +104,7 @@ int main(int argc, char** argv) {
         }
     }
     
+    //ждем завершения
     for (int i = 0; i < pnum; i++) {
         if (pthread_join(threads[i], NULL) != 0) {
             printf("Error: pthread_join failed!\n");
